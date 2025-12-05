@@ -354,31 +354,31 @@
         }
         
         .hidden {
-            display: none;
+            display: none !important;
         }
         
-        /* Banner de instalação PWA */
+        /* Banner de instalação PWA - VERSÃO CORRIGIDA */
         .install-banner {
             position: fixed;
             bottom: 20px;
             left: 20px;
             right: 20px;
-            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(22, 33, 62, 0.9) 100%);
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
             border: 2px solid var(--primary-color);
             border-radius: 15px;
-            padding: 15px;
+            padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
             backdrop-filter: blur(10px);
-            transform: translateY(150px);
-            transition: transform 0.5s ease;
+            transform: translateY(200%); /* Escondido por padrão */
+            transition: transform 0.5s ease-in-out;
         }
         
         .install-banner.show {
-            transform: translateY(0);
+            transform: translateY(0); /* Visível */
         }
         
         .install-banner-text {
@@ -387,7 +387,7 @@
         }
         
         .install-banner h3 {
-            margin: 0;
+            margin: 0 0 5px 0;
             color: var(--primary-color);
             font-family: 'Orbitron', monospace;
             font-size: 1.2rem;
@@ -396,14 +396,14 @@
         .install-banner p {
             margin: 0;
             font-size: 0.9rem;
-            color: #aaa;
+            color: #ccc;
         }
         
         .install-btn {
             background: linear-gradient(135deg, var(--primary-color) 0%, #00ffff 100%);
             color: #000;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
             border-radius: 50px;
             font-family: 'Orbitron', monospace;
             font-weight: 700;
@@ -412,6 +412,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             font-size: 0.9rem;
+            white-space: nowrap;
         }
         
         .install-btn:hover {
@@ -423,35 +424,45 @@
             background: transparent;
             border: none;
             color: #aaa;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             cursor: pointer;
-            margin-left: 10px;
+            margin-left: 15px;
             transition: color 0.3s ease;
+            line-height: 1;
         }
         
         .install-dismiss:hover {
             color: #fff;
         }
         
+        /* Ajuste para telas menores */
         @media (max-width: 768px) {
-            .banner h1 {
-                font-size: 1.8rem;
-            }
-            
-            .menu-btn {
-                margin: 5px;
-                padding: 10px 20px;
-                font-size: 0.9rem;
-            }
-            
             .install-banner {
                 flex-direction: column;
                 text-align: center;
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+                padding: 15px;
             }
             
             .install-banner-text {
                 margin-right: 0;
                 margin-bottom: 15px;
+            }
+
+            .install-banner h3 {
+                font-size: 1.1rem;
+            }
+
+            .install-banner p {
+                font-size: 0.8rem;
+            }
+            
+            .install-banner .install-btn,
+            .install-banner .install-dismiss {
+                display: inline-block;
+                vertical-align: middle;
             }
         }
     </style>
@@ -473,6 +484,9 @@
                         <button class="menu-btn" id="downloadBtn"><i class="fas fa-download"></i> Baixar Gists</button>
                         <button class="menu-btn" id="guideBtn"><i class="fas fa-question-circle"></i> Guia de Funcionalidades</button>
                         <button class="menu-btn" id="installBtn"><i class="fas fa-cog"></i> Como Usar</button>
+                        <button class="menu-btn" id="manageTokenBtn"><i class="fas fa-key"></i> Gerenciar Token</button>
+                        <!-- NOVO BOTÃO DE INSTALAÇÃO MANUAL -->
+                        <button class="menu-btn hidden" id="installAppBtn"><i class="fas fa-download"></i> Instalar App</button>
                     </div>
                 </div>
             </div>
@@ -560,7 +574,7 @@
                     <p>Insira seu Personal Access Token do GitHub com permissão 'gist':</p>
                     <input type="password" class="token-input" id="githubToken" placeholder="ghp_...">
                     <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" id="saveToken">
+                        <input class="form-check-input" type="checkbox" id="saveToken" checked>
                         <label class="form-check-label" for="saveToken">
                             Salvar token no navegador
                         </label>
@@ -651,7 +665,7 @@
                         <p>Após colar seu token, o script o salvará no localStorage do seu navegador.</p>
                         <ul>
                             <li>Graças a este recurso, você não precisará digitar o token novamente.</li>
-                            <li>Se você precisar usar um novo token no futuro, simplesmente limpe os dados do site no seu navegador.</li>
+                            <li>Se você precisar usar um novo token no futuro, simplesmente limpe os dados do site no seu navegador ou use a nova opção "Gerenciar Token".</li>
                         </ul>
                         
                         <p><strong>Pronto!</strong> Agora você pode usar todas as funcionalidades do script.</p>
@@ -674,7 +688,6 @@
         let gistsList = [];
         let selectedFile = null;
         let deferredPrompt;
-        let installBannerDismissed = localStorage.getItem('installBannerDismissed') === 'true';
         
         // Elementos do DOM
         const uploadBtn = document.getElementById('uploadBtn');
@@ -682,6 +695,9 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const guideBtn = document.getElementById('guideBtn');
         const installBtn = document.getElementById('installBtn');
+        const manageTokenBtn = document.getElementById('manageTokenBtn');
+        // NOVO ELEMENTO
+        const installAppBtn = document.getElementById('installAppBtn');
         
         const uploadSection = document.getElementById('uploadSection');
         const deleteSection = document.getElementById('deleteSection');
@@ -754,6 +770,27 @@
             installModal.show();
         });
         
+        manageTokenBtn.addEventListener('click', manageToken);
+
+        // NOVO EVENT LISTENER PARA O BOTÃO DE INSTALAÇÃO MANUAL
+        installAppBtn.addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        showNotification('Aplicativo instalado com sucesso!', 'success');
+                    } else {
+                        showNotification('Instalação cancelada.', 'warning');
+                    }
+                    deferredPrompt = null;
+                    // Esconder o botão após a interação
+                    installAppBtn.classList.add('hidden');
+                });
+            } else {
+                showNotification('A instalação não está disponível no momento. Verifique se o site está servido via HTTPS.', 'warning');
+            }
+        });
+
         cancelUploadBtn.addEventListener('click', () => {
             hideAllSections();
             selectedFile = null;
@@ -825,7 +862,6 @@
                 return;
             }
             
-            // Simplesmente baixamos o primeiro gist como exemplo
             downloadGist(gistsList[0]);
         });
         
@@ -835,7 +871,6 @@
                 return;
             }
             
-            // Baixar todos os gists em arquivos separados
             gistsList.forEach(gist => {
                 downloadGist(gist);
             });
@@ -849,7 +884,6 @@
                 return;
             }
             
-            // Baixar todos os gists combinados em um único arquivo
             downloadAllGistsCombined();
         });
         
@@ -884,8 +918,7 @@
         
         dismissInstallBtn.addEventListener('click', () => {
             installBanner.classList.remove('show');
-            localStorage.setItem('installBannerDismissed', 'true');
-            installBannerDismissed = true;
+            // Não salvamos mais no localStorage para permitir testes
         });
         
         // Registrar Service Worker para PWA
@@ -906,18 +939,21 @@
             e.preventDefault();
             deferredPrompt = e;
             
-            // Mostrar banner de instalação se não foi dispensado
-            if (!installBannerDismissed) {
-                setTimeout(() => {
-                    installBanner.classList.add('show');
-                }, 3000);
-            }
+            // Mostrar o botão de instalação no menu
+            installAppBtn.classList.remove('hidden');
+
+            // Mostrar banner de instalação após um pequeno delay
+            setTimeout(() => {
+                installBanner.classList.add('show');
+            }, 3000);
         });
         
-        // Evento quando o PWA é instalado
+        // Evento quando o PWA é instalado com sucesso
         window.addEventListener('appinstalled', () => {
-            installBanner.classList.remove('show');
             showNotification('Aplicativo instalado com sucesso!', 'success');
+            installBanner.classList.remove('show');
+            installAppBtn.classList.add('hidden'); // Esconder o botão
+            deferredPrompt = null;
         });
         
         // Funções
@@ -984,7 +1020,6 @@
                     const ownerLogin = data.owner.login;
                     const shortRawUrl = `https://gist.githubusercontent.com/${ownerLogin}/${gistId}/raw/`;
                     
-                    // Tentar gerar URL TinyURL
                     let tinyUrl = '';
                     try {
                         const tinyResponse = await fetch(`http://tinyurl.com/api-create.php?url=${encodeURIComponent(shortRawUrl)}`);
@@ -995,7 +1030,6 @@
                         console.error('Erro ao gerar TinyURL:', error);
                     }
                     
-                    // Salvar informações no localStorage
                     const timestamp = new Date().toLocaleString();
                     const logEntry = {
                         timestamp,
@@ -1234,6 +1268,18 @@
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 5000);
+        }
+
+        function manageToken() {
+            if (githubToken) {
+                if (confirm('Um token já está salvo. Deseja removê-lo?')) {
+                    localStorage.removeItem('githubToken');
+                    githubToken = '';
+                    showNotification('Token removido com sucesso!', 'success');
+                }
+            } else {
+                tokenModal.show();
+            }
         }
         
         // Verificar se há token salvo ao carregar a página
