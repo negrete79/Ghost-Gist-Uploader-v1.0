@@ -1,12 +1,12 @@
 {
   "name": "Ghost Gist Uploader",
   "short_name": "Ghost Gist",
-  "description": "Upload, Backup e Gerenciamento de Gists",
+  "description": "Upload, Backup e Gerenciamento de Gists do GitHub",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
-  "orientation": "portrait-primary",
+  "theme_color": "#0ff",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "icons/icon-192x192.png",
