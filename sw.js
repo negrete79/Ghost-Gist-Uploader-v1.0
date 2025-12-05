@@ -1,40 +1,42 @@
-const CACHE_NAME = 'ghost-gist-uploader-v1';
+// Nome do cache
+const CACHE_NAME = 'ghost-gist-cache-v1';
+
+// Arquivos para cachear na instalação
 const urlsToCache = [
   '/',
   '/index.html',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
-// Instala o Service Worker e cacheia os recursos
+// Evento de instalação: abre um cache e adiciona os arquivos essenciais
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Cache aberto');
+        console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
   );
 });
 
-// Intercepta requisições de rede e serve do cache se estiver offline
+// Evento de busca (fetch): serve arquivos do cache quando offline
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Cache hit - retorna a resposta do cache
+        // Se o arquivo estiver no cache, retorna-o
         if (response) {
           return response;
         }
+        // Senão, busca na rede
         return fetch(event.request);
-      }
-    )
+      })
   );
 });
 
-// Atualiza o cache quando uma nova versão do Service Worker é ativada
+// Evento de ativação: limpa caches antigos
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
