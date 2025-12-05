@@ -5,23 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ghost Gist Uploader v1.0</title>
     
-    <!-- Meta tags para PWA -->
+    <!-- Meta tags essenciais para PWA -->
     <meta name="theme-color" content="#0a0a0a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Ghost Gist">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     
-    <!-- Manifesto da PWA -->
+    <!-- O manifesto é o arquivo mais importante para a instalação -->
     <link rel="manifest" href="manifest.json">
     
-    <!-- Ícones para PWA -->
+    <!-- Ícones para o PWA -->
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* SEU CSS AQUI (ESTÁ IGUAL, MAS ESTOU COLOCANDO PARA COMPLETAR) */
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Source+Code+Pro:wght@400;600&display=swap');
         
         :root {
@@ -357,7 +358,7 @@
             display: none !important;
         }
         
-        /* Banner de instalação PWA - VERSÃO CORRIGIDA */
+        /* Banner de instalação PWA */
         .install-banner {
             position: fixed;
             bottom: 20px;
@@ -373,12 +374,12 @@
             z-index: 1000;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
             backdrop-filter: blur(10px);
-            transform: translateY(200%); /* Escondido por padrão */
+            transform: translateY(200%);
             transition: transform 0.5s ease-in-out;
         }
         
         .install-banner.show {
-            transform: translateY(0); /* Visível */
+            transform: translateY(0);
         }
         
         .install-banner-text {
@@ -435,7 +436,6 @@
             color: #fff;
         }
         
-        /* Ajuste para telas menores */
         @media (max-width: 768px) {
             .install-banner {
                 flex-direction: column;
@@ -485,13 +485,14 @@
                         <button class="menu-btn" id="guideBtn"><i class="fas fa-question-circle"></i> Guia de Funcionalidades</button>
                         <button class="menu-btn" id="installBtn"><i class="fas fa-cog"></i> Como Usar</button>
                         <button class="menu-btn" id="manageTokenBtn"><i class="fas fa-key"></i> Gerenciar Token</button>
-                        <!-- NOVO BOTÃO DE INSTALAÇÃO MANUAL -->
+                        <!-- Botão de instalação manual. Começa escondido. -->
                         <button class="menu-btn hidden" id="installAppBtn"><i class="fas fa-download"></i> Instalar App</button>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- As outras seções do seu app... -->
         <!-- Seção de Upload -->
         <div class="row hidden" id="uploadSection">
             <div class="col-md-12">
@@ -552,7 +553,7 @@
         </div>
     </div>
     
-    <!-- Banner de instalação PWA -->
+    <!-- Banner de instalação PWA (opcional, o botão no menu é mais confiável) -->
     <div class="install-banner" id="installBanner">
         <div class="install-banner-text">
             <h3>Instalar Aplicativo</h3>
@@ -562,6 +563,7 @@
         <button class="install-dismiss" id="dismissInstallBtn">&times;</button>
     </div>
     
+    <!-- Modals... -->
     <!-- Modal para Token -->
     <div class="modal fade" id="tokenModal" tabindex="-1" aria-labelledby="tokenModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -687,8 +689,11 @@
         let githubToken = localStorage.getItem('githubToken') || '';
         let gistsList = [];
         let selectedFile = null;
-        let deferredPrompt;
         
+        // --- LÓGICA DO PWA ---
+        // Variável para armazenar o evento de instalação
+        let deferredPrompt;
+
         // Elementos do DOM
         const uploadBtn = document.getElementById('uploadBtn');
         const deleteBtn = document.getElementById('deleteBtn');
@@ -696,7 +701,7 @@
         const guideBtn = document.getElementById('guideBtn');
         const installBtn = document.getElementById('installBtn');
         const manageTokenBtn = document.getElementById('manageTokenBtn');
-        // NOVO ELEMENTO
+        // Botão de instalação manual
         const installAppBtn = document.getElementById('installAppBtn');
         
         const uploadSection = document.getElementById('uploadSection');
@@ -730,13 +735,67 @@
         
         const notification = document.getElementById('notification');
         const notificationText = document.getElementById('notificationText');
+
+        // --- EVENT LISTENERS ---
+
+        // Event listener para o botão de instalação manual
+        installAppBtn.addEventListener('click', async () => {
+            console.log('Botão "Instalar App" clicado.');
+            if (!deferredPrompt) {
+                showNotification('A instalação não está disponível no momento.', 'warning');
+                return;
+            }
+            // Mostra o prompt de instalação do navegador
+            deferredPrompt.prompt();
+            // Espera a resposta do usuário
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`Resposta do usuário: ${outcome}`);
+            if (outcome === 'accepted') {
+                showNotification('Aplicativo instalado com sucesso!', 'success');
+            } else {
+                showNotification('Instalação cancelada.', 'warning');
+            }
+            // Limpa a variável para não poder chamar o prompt novamente
+            deferredPrompt = null;
+            // Esconde o botão
+            installAppBtn.classList.add('hidden');
+        });
+
+        // Evento que captura se o PWA pode ser instalado
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('Evento "beforeinstallprompt" disparado. App é instalável.');
+            // Impede que o prompt apareça automaticamente
+            e.preventDefault();
+            // Armazena o evento para usar depois
+            deferredPrompt = e;
+            // Mostra o nosso botão de instalação personalizado
+            installAppBtn.classList.remove('hidden');
+        });
+
+        // Evento que dispara quando o PWA é instalado com sucesso
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA foi instalado com sucesso.');
+            showNotification('Aplicativo instalado com sucesso!', 'success');
+            // Esconde o botão de instalação
+            installAppBtn.classList.add('hidden');
+            // Limpa o prompt
+            deferredPrompt = null;
+        });
+
+        // Registrar o Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado com sucesso:', registration);
+                    })
+                    .catch(error => {
+                        console.error('Falha ao registrar Service Worker:', error);
+                    });
+            });
+        }
         
-        // Elementos PWA
-        const installBanner = document.getElementById('installBanner');
-        const installPwaBtn = document.getElementById('installPwaBtn');
-        const dismissInstallBtn = document.getElementById('dismissInstallBtn');
-        
-        // Event Listeners
+        // Outros Event Listeners...
         uploadBtn.addEventListener('click', () => {
             hideAllSections();
             uploadSection.classList.remove('hidden');
@@ -771,25 +830,6 @@
         });
         
         manageTokenBtn.addEventListener('click', manageToken);
-
-        // NOVO EVENT LISTENER PARA O BOTÃO DE INSTALAÇÃO MANUAL
-        installAppBtn.addEventListener('click', () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        showNotification('Aplicativo instalado com sucesso!', 'success');
-                    } else {
-                        showNotification('Instalação cancelada.', 'warning');
-                    }
-                    deferredPrompt = null;
-                    // Esconder o botão após a interação
-                    installAppBtn.classList.add('hidden');
-                });
-            } else {
-                showNotification('A instalação não está disponível no momento. Verifique se o site está servido via HTTPS.', 'warning');
-            }
-        });
 
         cancelUploadBtn.addEventListener('click', () => {
             hideAllSections();
@@ -903,60 +943,7 @@
             showNotification('Token salvo com sucesso', 'success');
         });
         
-        // Eventos PWA
-        installPwaBtn.addEventListener('click', () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        showNotification('Aplicativo instalado com sucesso!', 'success');
-                    }
-                    deferredPrompt = null;
-                });
-            }
-        });
-        
-        dismissInstallBtn.addEventListener('click', () => {
-            installBanner.classList.remove('show');
-            // Não salvamos mais no localStorage para permitir testes
-        });
-        
-        // Registrar Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('Service Worker registrado com sucesso:', registration);
-                    })
-                    .catch(error => {
-                        console.log('Falha ao registrar Service Worker:', error);
-                    });
-            });
-        }
-        
-        // Evento para instalação do PWA
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // Mostrar o botão de instalação no menu
-            installAppBtn.classList.remove('hidden');
-
-            // Mostrar banner de instalação após um pequeno delay
-            setTimeout(() => {
-                installBanner.classList.add('show');
-            }, 3000);
-        });
-        
-        // Evento quando o PWA é instalado com sucesso
-        window.addEventListener('appinstalled', () => {
-            showNotification('Aplicativo instalado com sucesso!', 'success');
-            installBanner.classList.remove('show');
-            installAppBtn.classList.add('hidden'); // Esconder o botão
-            deferredPrompt = null;
-        });
-        
-        // Funções
+        // --- FUNÇÕES ---
         function hideAllSections() {
             uploadSection.classList.add('hidden');
             deleteSection.classList.add('hidden');
