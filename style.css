@@ -333,7 +333,6 @@ body {
     display: none !important;
 }
 
-/* Banner de instalação PWA */
 .install-banner {
     position: fixed;
     bottom: 20px;
@@ -439,4 +438,4 @@ body {
         display: inline-block;
         vertical-align: middle;
     }
-  }
+    }
